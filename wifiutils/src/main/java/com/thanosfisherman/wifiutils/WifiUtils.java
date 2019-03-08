@@ -12,6 +12,7 @@ import android.util.Log;
 
 import com.thanosfisherman.wifiutils.wifiConnect.ConnectionScanResultsListener;
 import com.thanosfisherman.wifiutils.wifiConnect.ConnectionSuccessListener;
+import com.thanosfisherman.wifiutils.wifiConnect.WifiConnectErrorType;
 import com.thanosfisherman.wifiutils.wifiConnect.WifiConnectionCallback;
 import com.thanosfisherman.wifiutils.wifiConnect.WifiConnectionReceiver;
 import com.thanosfisherman.wifiutils.wifiScan.ScanResultsListener;
@@ -90,7 +91,7 @@ public final class WifiUtils implements WifiConnectorBuilder,
                 else {
                     of(mScanResultsListener).ifPresent(resultsListener -> resultsListener.onScanResults(new ArrayList<>()));
                     of(mConnectionWpsListener).ifPresent(wpsListener -> wpsListener.isSuccessful(false));
-                    mWifiConnectionCallback.errorConnect();
+                    mWifiConnectionCallback.errorConnect(WifiConnectErrorType.SSID_NOT_FOUND);
                     wifiLog("ERROR COULDN'T SCAN");
                 }
             }
@@ -133,9 +134,9 @@ public final class WifiUtils implements WifiConnectorBuilder,
                     registerReceiver(mContext, mWifiConnectionReceiver,
                             new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));
                 } else
-                    mWifiConnectionCallback.errorConnect();
+                    mWifiConnectionCallback.errorConnect(WifiConnectErrorType.CONNECT_WIFI_FAIL);
             } else
-                mWifiConnectionCallback.errorConnect();
+                mWifiConnectionCallback.errorConnect(WifiConnectErrorType.SSID_NOT_FOUND);
         }
     };
 
@@ -146,17 +147,17 @@ public final class WifiUtils implements WifiConnectorBuilder,
             wifiLog("CONNECTED SUCCESSFULLY");
             unregisterReceiver(mContext, mWifiConnectionReceiver);
             //reenableAllHotspots(mWifiManager);
-            of(mConnectionSuccessListener).ifPresent(successListener -> successListener.isSuccessful(true));
+            of(mConnectionSuccessListener).ifPresent(successListener -> successListener.isSuccessful(WifiConnectErrorType.NO_ERROR));
         }
 
         @Override
-        public void errorConnect() {
+        public void errorConnect(@WifiConnectErrorType int errorType) {
             unregisterReceiver(mContext, mWifiConnectionReceiver);
             reenableAllHotspots(mWifiManager);
             //if (mSingleScanResult != null)
             //cleanPreviousConfiguration(mWifiManager, mSingleScanResult);
             of(mConnectionSuccessListener).ifPresent(successListener -> {
-                successListener.isSuccessful(false);
+                successListener.isSuccessful(errorType);
                 wifiLog("DIDN'T CONNECT TO WIFI");
             });
         }
@@ -197,7 +198,7 @@ public final class WifiUtils implements WifiConnectorBuilder,
                 of(wifiStateListener).ifPresent(stateListener -> stateListener.isSuccess(false));
                 of(mScanResultsListener).ifPresent(resultsListener -> resultsListener.onScanResults(new ArrayList<>()));
                 of(mConnectionWpsListener).ifPresent(wpsListener -> wpsListener.isSuccessful(false));
-                mWifiConnectionCallback.errorConnect();
+                mWifiConnectionCallback.errorConnect(WifiConnectErrorType.ENABLE_WIFI_FAIL);
                 wifiLog("COULDN'T ENABLE WIFI");
             }
         }

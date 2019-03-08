@@ -37,7 +37,7 @@ public final class WifiConnectionReceiver extends BroadcastReceiver {
             if (isAlreadyConnected(mWifiManager, of(mScanResult).next(scanResult -> scanResult.BSSID).get()))
                 mWifiConnectionCallback.successfulConnect();
             else
-                mWifiConnectionCallback.errorConnect();
+                mWifiConnectionCallback.errorConnect(WifiConnectErrorType.CONNECT_WIFI_FAIL);
             handler.removeCallbacks(this);
         }
     };
@@ -68,7 +68,7 @@ public final class WifiConnectionReceiver extends BroadcastReceiver {
 
             if (state == null) {
                 handler.removeCallbacks(handlerCallback);
-                mWifiConnectionCallback.errorConnect();
+                mWifiConnectionCallback.errorConnect(WifiConnectErrorType.CONNECT_WIFI_FAIL);
                 return;
             }
 
@@ -86,7 +86,7 @@ public final class WifiConnectionReceiver extends BroadcastReceiver {
                     if (supl_error == WifiManager.ERROR_AUTHENTICATING) {
                         wifiLog("Authentication error...");
                         handler.removeCallbacks(handlerCallback);
-                        mWifiConnectionCallback.errorConnect();
+                        mWifiConnectionCallback.errorConnect(WifiConnectErrorType.WRONG_PASSWORD);
                     } else {
                         wifiLog("Disconnected. Re-attempting to connect...");
                         reEnableNetworkIfPossible(mWifiManager, mScanResult);
